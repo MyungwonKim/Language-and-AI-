@@ -1,0 +1,154 @@
+import pandas as pd
+import re
+from typing import Optional, Dict
+
+reddit_posts = "data/extrovert_introvert.csv"
+reddit_posts_df = pd.read_csv(reddit_posts)
+
+
+MBTI_TYPES = [
+    "INTJ","INTP","INFJ","INFP",
+    "ISTJ","ISTP","ISFJ","ISFP",
+    "ENTJ","ENTP","ENFJ","ENFP",
+    "ESTJ","ESTP","ESFJ","ESFP"
+]
+
+# "Token-safe" pattern for MBTI type codes, allowing ENFP-T / INTJ-A / INFJ/A
+MBTI_TYPE_RE = re.compile(
+    r"(?<![A-Za-z])("
+    + "|".join(MBTI_TYPES)
+    + r")"
+    r"(?:\s*[-/]\s*[AT])?"
+    r"(?![A-Za-z])",
+    flags=re.IGNORECASE
+)
+
+INTROVERT_WORD_RE = re.compile(r"\bintro[\s\-]?vert(?:ed|s)?\b", re.IGNORECASE)
+EXTROVERT_WORD_RE = re.compile(r"\b(?:extro|extra)[\s\-]?vert(?:ed|s)?\b", re.IGNORECASE)
+
+
+SELF_DESC_PATTERNS = [
+    # Captures e.g. "I am / I'm / Im an INFJ"
+    (
+        "SELF_MBTYPE_I_AM",
+        re.compile(
+            r"\b(i\s*am|i['’]?\s*m|im)\s+(an?\s+)?"
+            r"(?P<mbti>(" + "|".join(MBTI_TYPES) + r")(?:\s*[-/]\s*[AT])?)\b",
+            re.IGNORECASE
+        )
+    ),
+
+    # Captures e.g. "As an INFJ, ..." / "As a INFJ, ..."
+    (
+        "SELF_MBTYPE_AS_AN",
+        re.compile(
+            r"\bas\s+an?\s+"
+            r"(?P<mbti>(" + "|".join(MBTI_TYPES) + r")(?:\s*[-/]\s*[AT])?)\b",
+            re.IGNORECASE
+        )
+    ),
+
+    # Captures e.g. "MBTI: INFJ" / "my mbti is infj"
+    (
+        "SELF_MBTYPE_MY_MBTI_IS",
+        re.compile(
+            r"\b(my\s+)?mbti\s*(?:is|:)\s*"
+            r"(?P<mbti>(" + "|".join(MBTI_TYPES) + r")(?:\s*[-/]\s*[AT])?)\b",
+            re.IGNORECASE
+        )
+    ),
+
+    # Captures e.g. "My type is INTJ" / "type: ENFP"
+    (
+        "SELF_MBTYPE_TYPE_IS",
+        re.compile(
+            r"\b(my\s+)?type\s*(?:is|:)\s*"
+            r"(?P<mbti>(" + "|".join(MBTI_TYPES) + r")(?:\s*[-/]\s*[AT])?)\b",
+            re.IGNORECASE
+        )
+    ),
+
+    # Captures e.g. "I am an introvert" / "I'm introverted"
+    (
+        "SELF_TRAIT_I_AM_INTROVERT",
+        re.compile(
+            r"\b(i\s*am|i['’]?\s*m|im)\s+(an?\s+)?(?P<trait>intro[\s\-]?vert(?:ed)?)\b",
+            re.IGNORECASE
+        )
+    ),
+
+    # Captures e.g. "I am an extrovert" / "I'm extroverted/extraverted"
+    (
+        "SELF_TRAIT_I_AM_EXTROVERT",
+        re.compile(
+            r"\b(i\s*am|i['’]?\s*m|im)\s+(an?\s+)?(?P<trait>(?:extro|extra)[\s\-]?vert(?:ed)?)\b",
+            re.IGNORECASE
+        )
+    ),
+
+    # Captures e.g. "introvert here" / "extrovert here" (common Reddit self-ID pattern)
+    (
+        "SELF_TRAIT_HERE",
+        re.compile(
+            r"\b(?P<trait>intro[\s\-]?vert(?:ed)?|(?:extro|extra)[\s\-]?vert(?:ed)?)\s+here\b",
+            re.IGNORECASE
+        )
+    ),
+
+    # Captures e.g. "I'm more of an introvert" / "I'm more extroverted than ..."
+    (
+        "SELF_TRAIT_MORE_OF",
+        re.compile(
+            r"\b(i\s*am|i['’]?\s*m|im)\s+more\s+(of\s+an?\s+)?"
+            r"(?P<trait>intro[\s\-]?vert(?:ed)?|(?:extro|extra)[\s\-]?vert(?:ed)?)\b",
+            re.IGNORECASE
+        )
+    ),
+]
+
+
+def detect_mbti_self_description(text: str) -> Optional[Dict[str, str]]:
+    """
+    Return dict with pattern info if MBTI self-description is detected, else None.
+    Output keys:
+      - identified_pattern
+      - matched_text
+      - mbti_type (optional)
+      - trait (optional)
+    """
+    if not isinstance(text, str) or not text.strip():
+        return None
+
+    for pattern_id, rx in SELF_DESC_PATTERNS:
+        m = rx.search(text)
+        if m:
+            out = {
+                "identified_pattern": pattern_id,
+                "matched_text": m.group(0)
+            }
+
+            # Extract groups if present
+            if "mbti" in m.groupdict() and m.group("mbti") is not None:
+                out["mbti_type"] = m.group("mbti").upper().replace(" ", "")
+            else:
+                out["mbti_type"] = None
+
+            return out
+
+    return None
+
+reddit_posts_df_copy = reddit_posts_df.copy()
+
+filtered_posts = reddit_posts_df_copy["post"].apply(detect_mbti_self_description)
+
+reddit_posts_df_copy["identified_pattern"] = filtered_posts.apply(lambda x: x["identified_pattern"] if isinstance(x, dict) else None)
+reddit_posts_df_copy["matched_text"] = filtered_posts.apply(lambda x: x["matched_text"] if isinstance(x, dict) else None)
+reddit_posts_df_copy["mbti_type_detected"] = filtered_posts.apply(lambda x: x["mbti_type"] if isinstance(x, dict) else None)
+
+df_self_descriptions = reddit_posts_df_copy[reddit_posts_df_copy["identified_pattern"].notna()].reset_index(drop=True)
+
+df_self_descriptions.to_csv("MBTI_self_descriptions_only.csv", index=False)
+
+print("Total posts:", len(reddit_posts_df))
+print("Self-description MBTI posts:", len(df_self_descriptions))
+print(df_self_descriptions[["identified_pattern", "matched_text"]].head(10))
