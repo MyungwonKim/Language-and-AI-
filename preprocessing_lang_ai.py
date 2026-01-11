@@ -6,8 +6,8 @@ from langdetect import detect, LangDetectException
 from tqdm import tqdm 
 
 # --- CONFIGURATION ---
-INPUT_FILE = r"C:/Users/20235050/Downloads/BDS_Y3/Language_AI/assignment_data/assignment_data/extrovert_introvert.csv"
-OUTPUT_FILE = r"C:/Users/20235050/Downloads/BDS_Y3/Language_AI/assignment_data/processed_reddit_authors.csv" 
+INPUT_FILE = "data/extrovert_introvert.csv"
+OUTPUT_FILE = "data//processed_reddit_authors.csv" 
 AUTHOR_COL = "auhtor_ID"   
 POST_COL = "post"       
 LABEL_COL = "extrovert" 
@@ -114,4 +114,5 @@ def process_data():
     print(f"Saved processed data to {OUTPUT_FILE}")
 
 if __name__ == "__main__":
+
     process_data()
