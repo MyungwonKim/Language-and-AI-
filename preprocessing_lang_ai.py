@@ -7,7 +7,7 @@ from tqdm import tqdm
 
 # --- CONFIGURATION ---
 INPUT_FILE = "data/extrovert_introvert.csv"
-OUTPUT_FILE = "data//processed_reddit_authors.csv" 
+OUTPUT_FILE = "data/processed_reddit_authors.csv" 
 AUTHOR_COL = "auhtor_ID"   
 POST_COL = "post"       
 LABEL_COL = "extrovert" 
@@ -116,3 +116,4 @@ def process_data():
 if __name__ == "__main__":
 
     process_data()
+
