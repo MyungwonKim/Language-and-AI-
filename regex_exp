@@ -2,7 +2,7 @@ import pandas as pd
 import re
 from typing import Optional, Dict
 
-reddit_posts = "data/extrovert_introvert.csv"
+reddit_posts = "data/processed_reddit_authors.csv"
 reddit_posts_df = pd.read_csv(reddit_posts)
 
 
@@ -139,7 +139,7 @@ def detect_mbti_self_description(text: str) -> Optional[Dict[str, str]]:
 
 reddit_posts_df_copy = reddit_posts_df.copy()
 
-filtered_posts = reddit_posts_df_copy["post"].apply(detect_mbti_self_description)
+filtered_posts = reddit_posts_df_copy["final_text"].apply(detect_mbti_self_description)
 
 reddit_posts_df_copy["identified_pattern"] = filtered_posts.apply(lambda x: x["identified_pattern"] if isinstance(x, dict) else None)
 reddit_posts_df_copy["matched_text"] = filtered_posts.apply(lambda x: x["matched_text"] if isinstance(x, dict) else None)
