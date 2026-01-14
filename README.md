@@ -29,21 +29,10 @@ RobertaBase.py (model training × 3)
 metrics_eval.py (performance comparison)
 ```
 
-## Prerequisites
-
-- Python 3.x
-- Required libraries: 
-  - pandas
-  - scikit-learn
-  - transformers (Hugging Face)
-  - torch
-  - numpy
-  - re (regex)
-
-## Installation
+## Install Prerequisites
 
 ```bash
-pip install pandas scikit-learn transformers torch numpy
+pip install -r requirements.txt
 ```
 
 ## Usage
@@ -136,9 +125,10 @@ This generates performance metrics (accuracy, F1-score, precision, recall) for a
 | `traintest_split.py` | Splits data into train/test/validation sets |
 | `RobertaBase.py` | Trains RoBERTa model on the prepared datasets |
 | `metrics_eval.py` | Evaluates and compares model performances |
-| `baseline. py` | Baseline model implementation |
-| `eda. ipynb` | Exploratory data analysis notebook |
+| `baseline.py` | Baseline model implementation |
+| `eda.ipynb` | Exploratory data analysis notebook |
 | `performance_comparison.py` | Additional performance comparison utilities |
+| `requirements.txt` | Core dependencies for the pipeline |
 
 ## Project Structure
 
@@ -149,11 +139,12 @@ Language-and-AI-/
 ├── masking.py
 ├── masking_random.py
 ├── traintest_split.py
-├── RobertaBase. py
-├── metrics_eval. py
+├── RobertaBase.py
+├── metrics_eval.py
 ├── baseline.py
 ├── performance_comparison.py
 ├── eda.ipynb
+├── requirements.txt
 ├── README.md
 └── data/
     ├── raw_data/
@@ -161,11 +152,13 @@ Language-and-AI-/
     │   ├── test.csv
     │   └── val.csv
     ├── masked_self/
-    │   ├── train.csv
+    │   ├── train. csv
     │   ├── test.csv
     │   └── val.csv
     └── masked_random/
         ├── train.csv
         ├── test.csv
         └── val.csv
+```
+
 ```
