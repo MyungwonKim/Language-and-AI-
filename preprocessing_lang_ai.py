@@ -5,21 +5,20 @@ import ftfy
 from langdetect import detect, LangDetectException
 from tqdm import tqdm 
 
-# --- CONFIGURATION ---
 INPUT_FILE = "data/extrovert_introvert.csv"
-OUTPUT_FILE = "data/processed_reddit_authors.csv" 
+OUTPUT_FILE = "data/processed_reddit_posts.csv"
 AUTHOR_COL = "auhtor_ID"   
 POST_COL = "post"       
 LABEL_COL = "extrovert" 
 
-# --- PREPROCESSOR CLASS ---
+# Class for preprocessing 
 class RedditPreprocessor:
     def __init__(self):
         self.url_pattern = re.compile(r'http\S+|www\.\S+')
         self.user_pattern = re.compile(r'u/\S+')
         self.sub_pattern = re.compile(r'r/\S+')
         
-        # Regex for quotes (handles spaces before >)
+        # Regex for quotes
         self.quote_pattern = re.compile(r'^\s*>.*$', re.MULTILINE)
         
         self.symbol_squash_pattern = re.compile(r'([!?.@$])\1{2,}')
@@ -33,28 +32,28 @@ class RedditPreprocessor:
     def clean_post(self, text):
         if not isinstance(text, str): return ""
         
-        # 1. Fix Encoding & HTML
+        # Fix encoding & HTML
         text = ftfy.fix_text(text)
         text = html.unescape(text)
         
-        # 2. Remove Quotes & Markdown Links
+        # Remove quotes & markdown links
         text = self.quote_pattern.sub('', text)
         text = self.markdown_link_pattern.sub(r'\1', text)
         
-        # 3. Bot Check
+        # Bot check
         if any(phrase in text.lower() for phrase in self.bot_phrases):
             return ""
 
-        # 4. Token Replacements
+        # Token replacements
         text = self.url_pattern.sub('[URL]', text)
         text = self.user_pattern.sub('[USER]', text)
         text = self.sub_pattern.sub('[SUB]', text)
         
-        # 5. Symbol Squashing & Whitespace
+        # Symbol squashing & whitespace
         text = self.symbol_squash_pattern.sub(r'\1', text)
         text = re.sub(r'\s+', ' ', text).strip()
         
-        # 6. Language Check
+        # Language check
         if len(text) < 5: 
             return text if text.isascii() else ""
             
@@ -65,7 +64,7 @@ class RedditPreprocessor:
 
         return text
 
-# --- MAIN EXECUTION ---
+# Main execution
 def process_data():
     print("Loading data...")
     try:
@@ -75,45 +74,31 @@ def process_data():
         
     print(f"Original shape: {df.shape}")
     
-    # 1. Initialize Preprocessor
+    # Initialize preprocessor
     processor = RedditPreprocessor()
     tqdm.pandas(desc="Cleaning Posts")
     
-    # 2. Apply Cleaning
+    # Apply cleaning
     print("Cleaning posts...")
     df['clean_text'] = df[POST_COL].progress_apply(processor.clean_post)
     
-    # 3. Remove Empty Rows
+    # Remove empty rows
+    # This removes posts that were filtered out by language check or bot check
+    initial_count = len(df)
     df = df[df['clean_text'] != ""]
+    print(f"Removed {initial_count - len(df)} empty/non-English rows.")
     
-    # 4. Group by Author and Aggregate
-    print("Grouping by Author...")
-    agg_funcs = {'clean_text': lambda x: ' '.join(x)}
+    # Final selection
+    cols_to_keep = [AUTHOR_COL, 'clean_text']
+    
     if LABEL_COL in df.columns:
-        agg_funcs[LABEL_COL] = 'first'
-        
-    df_grouped = df.groupby(AUTHOR_COL).agg(agg_funcs).reset_index()
-    
-    # 5. NO TRUNCATION (Changed Step)
-    # We directly copy the full history to final_text.
-    # This keeps 100% of the data for your chunking strategy later.
-    print("Copying full text (No Truncation)...")
-    df_grouped['final_text'] = df_grouped['clean_text']
-    
-    # 6. Save
-    # We drop clean_text to avoid having two massive columns, 
-    # but final_text will still be very large.
-    cols_to_keep = [AUTHOR_COL, 'final_text']
-    if LABEL_COL in df_grouped.columns:
         cols_to_keep.append(LABEL_COL)
     
-    df_final = df_grouped[cols_to_keep]
+    df_final = df[cols_to_keep]
     
-    print(f"Final grouped shape: {df_final.shape}")
+    print(f"Final shape: {df_final.shape}")
     df_final.to_csv(OUTPUT_FILE, index=False)
     print(f"Saved processed data to {OUTPUT_FILE}")
 
 if __name__ == "__main__":
-
     process_data()
-
