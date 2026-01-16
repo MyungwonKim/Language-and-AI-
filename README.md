@@ -201,28 +201,25 @@ python chunking.py
 # 4. Filter chunks to keep only those with self-descriptions (2nd pass)
 python regex_exp.py  # Run again on chunked data
 
-# 5. (Optional) Analyze vocabulary distribution
-python vocab_count_plot.py
-
-# 6. Create three dataset variants
-# 6a. Raw dataset:  use output from step 4 as-is
-# 6b.  Masked self-descriptions
+# 5. Create three dataset variants
+# 5a. Raw dataset:  use output from step 4 as-is
+# 5b.  Masked self-descriptions
 python masking. py
-# 6c. Random masking (control)
+# 5c. Random masking (control)
 python masking_random. py
 
-# 7. Split into train/val/test (70/15/15 by author)
+# 6. Split into train/val/test (70/15/15 by author)
 # Edit file paths in traintest_split.py for each dataset
 python traintest_split. py  # Run 3 times (raw, masked_self, masked_random)
 
-# 8. Train RoBERTa models
+# 7. Train RoBERTa models
 # Edit TRAIN_FILE, VAL_FILE, OUTPUT_DIR in RobertaBase.py for each run
 python RobertaBase. py  # Run 3 times (one per dataset)
 
-# 9. Compare model performances
+# 8. Compare model performances
 python metrics_eval.py
 
-# 10. Analyze word importance
+# 9. Analyze word importance
 python word_importance.py
 ```
 
@@ -313,17 +310,8 @@ python regex_exp.py
 
 Run the regex filter again on the chunked data to keep only chunks that contain self-descriptions.  This ensures that after chunking, we still have self-description information in each chunk.
 
-### Step 5: Vocabulary Analysis (Optional)
 
-Analyze the vocabulary distribution in your dataset: 
-
-```bash
-python vocab_count_plot.py
-```
-
-This generates a bar chart showing the top 20 most frequent words in the dataset and provides vocabulary statistics.
-
-### Step 6: Apply Masking Strategies
+### Step 5: Apply Masking Strategies
 
 Generate three different datasets:
 
@@ -342,7 +330,7 @@ python masking_random. py
 ```
 This randomly masks words in the posts for baseline comparison.
 
-### Step 7: Split Data
+### Step 6: Split Data
 
 For each of the three datasets, run: 
 
@@ -357,7 +345,7 @@ This splits each dataset into train, test, and validation CSV files.
 - `data/masked_self/`
 - `data/masked_random/`
 
-### Step 8: Train RoBERTa Models
+### Step 7: Train RoBERTa Models
 
 Train three separate models, one for each dataset:
 
@@ -372,7 +360,7 @@ python RobertaBase.py
 
 The trained models will be saved for later evaluation.  
 
-### Step 9: Evaluate and Compare
+### Step 8: Evaluate and Compare
 
 Run the evaluation script to compare model performances:
 
@@ -382,7 +370,7 @@ python metrics_eval.py
 
 This generates performance metrics (accuracy, F1-score, precision, recall) for all three models.
 
-### Step 10: Analyze Word Importance
+### Step 9: Analyze Word Importance
 
 Understand which words the model relies on for predictions:
 
@@ -399,7 +387,6 @@ This generates bar charts showing the most important words for predicting introv
 | `preprocessing_lang_ai.py` | Cleans and preprocesses the raw CSV data |
 | `regex_exp.py` | Filters posts/chunks containing self-description patterns (run twice) |
 | `chunking.py` | Slices long posts into manageable chunks |
-| `vocab_count_plot.py` | Counts vocabulary and plots top 20 frequent words |
 | `masking.py` | Masks self-description phrases in posts |
 | `masking_random.py` | Randomly masks words in posts |
 | `traintest_split.py` | Splits data into train/test/validation sets |
@@ -418,7 +405,6 @@ Language-and-AI-/
 ├── preprocessing_lang_ai.py
 ├── regex_exp.py
 ├── chunking.py
-├── vocab_count_plot.py
 ├── masking.py
 ├── masking_random.py
 ├── traintest_split. py
